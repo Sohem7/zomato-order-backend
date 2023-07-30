@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Zomato Online Order</title>
+  <style>
+    /* Add some basic styling here */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    label, input {
+      display: block;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Zomato Online Order</h1>
+
+  <!-- Form to add a restaurant -->
+  <h2>Add a Restaurant</h2>
+  <form id="restaurantForm">
+    <label for="name">Name:</label>
+    <input type="text" id="name" required>
+
+    <label for="location">Location:</label>
+    <input type="text" id="location" required>
+
+    <label for="cuisine">Cuisine:</label>
+    <input type="text" id="cuisine" required>
+
+    <button type="submit">Add Restaurant</button>
+  </form>
+
+  <!-- Form to add a menu item -->
+  <h2>Add a Menu Item</h2>
+  <form id="menuForm">
+    <label for="restaurantId">Restaurant ID:</label>
+    <input type="text" id="restaurantId" required>
+
+    <label for="itemName">Name:</label>
+    <input type="text" id="itemName" required>
+
+    <label for="itemPrice">Price:</label>
+    <input type="number" id="itemPrice" required>
+
+    <button type="submit">Add Menu Item</button>
+  </form>
+
+  <!-- Form to place an order -->
+  <h2>Place an Order</h2>
+  <form id="orderForm">
+    <label for="restaurantId">Restaurant ID:</label>
+    <input type="text" id="restaurantId" required>
+
+    <label for="items">Menu Items (comma-separated):</label>
+    <input type="text" id="items" required>
+
+    <label for="totalAmount">Total Amount:</label>
+    <input type="number" id="totalAmount" required>
+
+    <label for="customerName">Customer Name:</label>
+    <input type="text" id="customerName" required>
+
+    <label for="deliveryAddress">Delivery Address:</label>
+    <input type="text" id="deliveryAddress" required>
+
+    <label for="contactNumber">Contact Number:</label>
+    <input type="text" id="contactNumber" required>
+
+    <button type="submit">Place Order</button>
+  </form>
+
+  <h2>Restaurant List</h2>
+  <ul id="restaurantList"></ul>
+
+  <h2>Menu Items</h2>
+  <ul id="menuItems"></ul>
+
+  <h2>Orders</h2>
+  <ul id="orderList"></ul>
+
+  <script>
+    // JavaScript code to interact with the backend
+
+    // Function to handle form submissions
+    function handleSubmit(event, endpoint) {
+      event.preventDefault();
+
+      const form = event.target;
+      const formData = new FormData(form);
+      const data = {};
+
+      formData.forEach((value, key) => {
+        data[key] = value;
+      });
+
+      fetch(`http://localhost:5000/api/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+        .then((response) => response.json())
+        .then(() => {
+          alert(`${endpoint} added successfully!`);
+          form.reset();
+          getRestaurants();
+          getMenuItems();
+          getOrders();
+        })
+        .catch((error) => {
+          alert(`Error adding ${endpoint}: ${error.message}`);
+        });
+    }
+
+    // Function to get the list of restaurants, menu items, and orders
+    function getRestaurants() {
+      fetch('http://localhost:5000/api/restaurants')
+        .then((response) => response.json())
+        .then((data) => {
+          const restaurantList = document.getElementById('restaurantList');
+          restaurantList.innerHTML = '';
+
+          data.forEach((restaurant) => {
+            const li = document.createElement('li');
+            li.textContent = `${restaurant.name} - ${restaurant.cuisine} (${restaurant.location})`;
+            restaurantList.appendChild(li);
+          });
+        })
+        .catch((error) => {
+          console.error('Error fetching restaurants:', error.message);
+        });
+    }
+
+    function getMenuItems() {
+      fetch('http://localhost:5000/api/menus')
+        .then((response) => response.json())
+        .then((data) => {
+          const menuItems = document.getElementById('menuItems');
+          menuItems.innerHTML = '';
+
+          data.forEach((menuItem) => {
+            const li = document.createElement('li');
+            li.textContent = `${menuItem.name} - $${menuItem.price}`;
+            menuItems.appendChild(li);
+          });
+        })
+        .catch((error) => {
+          console.error('Error fetching menu items:', error.message);
+        });
+    }
+
+    function getOrders() {
+      fetch('http://localhost:5000/api/orders')
+        .then((response) => response.json())
+        .then((data) => {
+          const orderList = document.getElementById('orderList');
+          orderList.innerHTML = '';
+
+          data.forEach((order) => {
+            const li = document.createElement('li');
+            const items = order.items.map((item) => item.name).join(', ');
+            li.textContent = `${order.customerName} ordered: ${items} (Total: $${order.totalAmount})`;
+            orderList.appendChild(li);
+          });
+        })
+        .catch((error) => {
+          console.error('Error fetching orders:', error.message);
+        });
+    }
+
+    // Attach event listeners to the forms
+    document.getElementById('restaurantForm').addEventListener('submit', (event) => handleSubmit(event, 'restaurants'));
+    document.getElementById('menuForm').addEventListener('submit', (event) => handleSubmit(event, 'menus'));
+    document.getElementById('orderForm').addEventListener('submit', (event) => handleSubmit(event, 'orders'));
+
+    // Fetch the initial data
+    getRestaurants();
+    getMenuItems();
+    getOrders();
+  </script>
+</body>
+</html>
